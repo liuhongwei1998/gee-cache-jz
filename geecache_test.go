@@ -8,11 +8,11 @@ import (
 )
 
 // 用map模拟数据库
-var db = map[string]string{
-	"Tom":  "630",
-	"Jack": "589",
-	"Sam":  "567",
-}
+//var db = map[string]string{
+//	"Tom":  "630",
+//	"Jack": "589",
+//	"Sam":  "567",
+//}
 
 func TestGet(t *testing.T) {
 

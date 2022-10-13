@@ -17,7 +17,7 @@ type entry struct {
 	value Value
 }
 
-//为了通用性，我们允许值是实现了 Value 接口的任意类型，
+//为了通用性，允许值是实现了 Value 接口的任意类型，
 //该接口只包含了一个方法 Len() int，
 //用于返回值所占用的内存大小。
 type Value interface {
