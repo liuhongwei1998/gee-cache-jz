@@ -2,6 +2,7 @@ package gee_cache_jz
 
 import (
 	"fmt"
+	"gee-cache-jz/singleflight"
 	"log"
 	"sync"
 )
@@ -26,6 +27,10 @@ type Group struct {
 
 	//多节点选择器,有http-pool实现，并注入进去
 	peers PeerPicker
+
+	// use single-flight.Group to make sure that
+	// each key is only fetched once
+	loader *singleflight.Group
 }
 
 var (
@@ -46,9 +51,10 @@ func NewGroup(name string, cacheBytes int64, getter Getter) *Group {
 		mainCache: cache{
 			cacheBytes: cacheBytes,
 		},
+		loader: &singleflight.Group{}, // Loader 懒加载，map不再这里初始化
 	}
 
-	// 全局变量 记得枷锁
+	// 全局变量 记得加锁
 	groups[name] = g
 	return g
 }
@@ -74,17 +80,34 @@ func (g *Group) Get(key string) (ByteView, error) {
 }
 
 func (g *Group) load(key string) (value ByteView, err error) {
-	if g.peers != nil {
-		if peer, ok := g.peers.PickPeer(key); ok {
-			if value, err = g.getFromPeer(peer, key); err == nil {
-				return value, nil
+	//if g.peers != nil {
+	//	if peer, ok := g.peers.PickPeer(key); ok {
+	//		if value, err = g.getFromPeer(peer, key); err == nil {
+	//			return value, nil
+	//		}
+	//		log.Println("[GeeCache] Failed to get from peer", err)
+	//	}
+	//}
+	//
+	//// 从本地
+	//return g.getLocally(key)
+	view, err := g.loader.Do(key, func() (interface{}, error) {
+		if g.peers != nil {
+			if peer, ok := g.peers.PickPeer(key); ok {
+				if value, err = g.getFromPeer(peer, key); err == nil {
+					return value, nil
+				}
+				log.Println("[GeeCache] Failed to get from peer", err)
 			}
-			log.Println("[GeeCache] Failed to get from peer", err)
 		}
-	}
+		return g.getLocally(key)
+	})
 
-	// 从本地
-	return g.getLocally(key)
+	if err != nil {
+		return view.(ByteView), nil
+	}
+	// error
+	return
 }
 
 // 从其他节点获取数据
