@@ -18,10 +18,14 @@ func (f GetterFunc) Get(key string) ([]byte, error) {
 }
 
 type Group struct {
-	name      string
-	getter    Getter
+	name   string
+	getter Getter
+
+	// 缓存主体
 	mainCache cache
-	peers     PeerPicker
+
+	//多节点选择器,有http-pool实现，并注入进去
+	peers PeerPicker
 }
 
 var (
@@ -44,6 +48,7 @@ func NewGroup(name string, cacheBytes int64, getter Getter) *Group {
 		},
 	}
 
+	// 全局变量 记得枷锁
 	groups[name] = g
 	return g
 }

@@ -31,7 +31,7 @@ func New(replicas int, fn Hash) *Map {
 	return m
 }
 
-// 添加节点到哈希环
+// Add 添加节点到哈希环
 func (m *Map) Add(keys ...string) {
 	for _, key := range keys {
 		for i := 0; i < m.replicas; i++ {

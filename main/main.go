@@ -46,7 +46,7 @@ func startAPIServer(apiAddr string, gee *gee_cache_jz.Group) {
 			w.Write(view.ByteSlice())
 
 		}))
-	log.Println("fontend server is running at", apiAddr)
+	log.Println("frontend server is running at", apiAddr)
 	log.Fatal(http.ListenAndServe(apiAddr[7:], nil))
 }
 
@@ -57,6 +57,26 @@ func main() {
 	flag.IntVar(&port, "port", 8001, "Geecache server port")
 	flag.BoolVar(&api, "api", false, "Start a api server?")
 	flag.Parse()
+
+	apiAddr := "http://localhost:9999"
+
+	addrMap := map[int]string{
+		8001: "http://localhost:8001",
+		8002: "http://localhost:8002",
+		8003: "http://localhost:8003",
+	}
+
+	var addrs []string
+	for _, v := range addrMap {
+		addrs = append(addrs, v)
+	}
+
+	gee := createGroup()
+	if api {
+		go startAPIServer(apiAddr, gee)
+	}
+
+	startCacheServer(addrMap[port], []string(addrs), gee)
 
 	//gee_cache_jz.NewGroup("scores", 2<<10, gee_cache_jz.GetterFunc(
 	//	func(key string) ([]byte, error) {

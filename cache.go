@@ -16,6 +16,8 @@ type cache struct {
 func (c *cache) add(key string, value ByteView) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
+	// lazy load
 	if c.lru == nil {
 		c.lru = lru.New(c.cacheBytes, nil)
 	}
