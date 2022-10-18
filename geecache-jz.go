@@ -2,6 +2,7 @@ package gee_cache_jz
 
 import (
 	"fmt"
+	pb "gee-cache-jz/geecachepb-jz"
 	"gee-cache-jz/singleflight"
 	"log"
 	"sync"
@@ -112,11 +113,17 @@ func (g *Group) load(key string) (value ByteView, err error) {
 
 // 从其他节点获取数据
 func (g *Group) getFromPeer(peer PeerGetter, key string) (ByteView, error) {
-	bytes, err := peer.Get(g.name, key)
+	req := &pb.Request{
+		Group: g.name,
+		Key:   key,
+	}
+
+	res := &pb.Response{}
+	err := peer.Get(req, res)
 	if err != nil {
 		return ByteView{}, err
 	}
-	return ByteView{b: bytes}, nil
+	return ByteView{b: res.Value}, nil
 }
 
 func (g *Group) getLocally(key string) (ByteView, error) {
